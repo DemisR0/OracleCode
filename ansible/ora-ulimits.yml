@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: ora - permanent kernel params
+      lineinfile:
+        path: /etc/security/limits.d/90-ora-limits.conf
+        state: present
+        create: yes
+        regexp: '{{ item.regexp }}'
+        line: '{{ item.line }}'
+      with_items:
+        - { regexp: '^oracle       hard    nofile', line: 'oracle      hard    nofile     65536' }
+        - { regexp: '^oracle       hard    nproc', line: 'oracle      hard    nproc     16384' }
+        - { regexp: '^oracle       -       stack', line: 'oracle      -       stack     32768' }
+        - { regexp: '^oracle       -       memlock', line: 'oracle     -       memlock   7549745' }
+        - { regexp: '^grid         hard    nofile', line: 'grid        hard    nofile     65536' }
+        - { regexp: '^grid         hard    nproc', line: 'grid        hard    nproc     16384' }
+        - { regexp: '^grid         -       stack', line: 'grid       -       stack     32768' }
+        - { regexp: '^grid         -       memlock', line: 'grid     -       memlock   7549745' }

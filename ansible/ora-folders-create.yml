@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: oracle - Create folders
+      file:
+        path: '{{ item.name }}'
+        owner: oracle
+        group: oinstall
+        mode: '0775'
+        state: directory
+      with_items:
+        - { name: /u01/app/oracle }
+        - { name: /u01/app/oraInventory }
+        - { name: /u01/app/oracle/product/19.0.0/dbhome_1 }
+        - { name: /u01/app/oracle/product/12.2.0/dbhome_1 }
+        - { name: /u01/app/oracle/product/12.1.0/dbhome_1 }
+        - { name: /u01/app/oracle/product/11.2.0/dbhome_1 }        
+        - { name: /u02/app/oracle/oradata }
+        - { name: /u03/app/oracle }
+        - { name: /u04/app/oracle }

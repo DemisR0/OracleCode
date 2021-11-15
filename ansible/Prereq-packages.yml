@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:  
+    - name: Install prereq packages for Oracle
+      yum:
+        name:
+          - binutils
+          - compat-libcap1
+          - gcc
+          - gcc-c++
+          - glibc
+          - glibc-devel
+          - ksh
+          - libX11
+          - libXaw
+          - libXft
+          - libXi
+          - libXmu
+          - libXp
+          - libXtst
+          - libaio
+          - libaio-devel
+          - libattr-devel
+          - libattr-devel
+          - libgcc
+          - libgfortran
+          - libstdc++
+          - libattr-devel
+          - make
+          - pam
+          - pam-devel
+          - sysstat
+          - perl
+          - perl-libs
+          - dstat
+          - c-ares
+          - gnutls
+          - libsmi
+          - nettle
+          - trousers
+          - wireshark
+          - openssh
+          - nfsutils
+          - elfutils-libelf-devel 
+          - psmisc
+        state: latest

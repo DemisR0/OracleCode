@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: oracle - Create linux groupe
+group:
+name: "{{ item.name }}"
+state: present
+with_items:
+- { name: 'oinstall' }
+- { name: 'dba' }
+- { name: 'dbaoper' }
+- { name: 'grid' }
+
+- name: oracle - Create oracle user
+user:
+name: grid
+groups: oinstall,dba,dbaoper,grid
+
+- name: oracle - Create grid user for oracle
+user:
+name: oracle
+groups: oinstall,dba,dbaoper,grid

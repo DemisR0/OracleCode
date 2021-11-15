@@ -1,0 +1,37 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: ora - permanent kernel params
+      lineinfile:
+        path: /etc/sysctl.d/97-oracle-databasesysctl.conf
+        state: present
+        create: yes
+        regexp: '{{ item.regexp }}'
+        line: '{{ item.line }}'
+      with_items:
+        - { regexp: '^net.core.rmem_default', line: 'net.core.rmem_default = 262144' }
+        - { regexp: '^net.core.wmem_default', line: 'net.core.wmem_default = 262144' }
+        - { regexp: '^net.core.rmem_max', line: 'net.core.rmem_max = 4194304' }
+        - { regexp: '^net.core.wmem_max', line: 'net.core.wmem_max = 1048576' }
+        - { regexp: '^fs.aio-max-nr', line: 'fs.aio-max-nr = 1048576' }
+        - { regexp: '^fs.file-max', line: 'fs.file-max = 6815744' }
+        - { regexp: '^kernel.shmall', line: 'kernel.shmall = 28191299' }
+        - { regexp: '^kernel.shmmax', line: 'kernel.shmmax = 115471560704' }
+        - { regexp: '^kernel.shmmni', line: 'kernel.shmmni = 4096' }
+        - { regexp: '^kernel.sem', line: 'kernel.sem = 250 32000 100 128' }
+        - { regexp: '^net.ipv4.ip_local_port_range', line: 'net.ipv4.ip_local_port_range = 9000 65500' }
+    - name: ora - wmem_default live
+      shell: sysctl -w net.core.rmem_default=262144
+    - name: ora - wmem_default live
+      shell: sysctl -w net.core.wmem_default=262144
+    - name: ora - wmem_default live
+      shell: sysctl -w net.core.rmem_max=4194304
+    - name: ora - wmem_default live
+      shell: sysctl -w net.core.wmem_max=1048576
+    - name: ora - online local ip port range
+      shell: sysctl -w net.ipv4.ip_local_port_range="9000 65000"
+    - name: ora - apply permanent kernel changes
+      shell: /sbin/sysctl --system
