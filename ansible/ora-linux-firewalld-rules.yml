@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: oracle - open listener and EM ports
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        in_interface: eth0
+        destination_port: "{{ item }}"
+        jump: ACCEPT
+        with_items:
+          - 1521
+          - 5500

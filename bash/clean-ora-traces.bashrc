@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 #==============================================================================
 #       Script : gestion_traces.ksh
 #       Version : 1.0.0
@@ -29,6 +29,8 @@ do
       *)
          ORACLE_SID=`echo ${LINE} | awk -F: '{print $1}'`
          ORACLE_HOME=`echo ${LINE} | awk -F: '{print $2}'`
+         ORAENV_ASK=NO
+         . oraenv
          ACTIVE=`echo ${LINE} | awk -F: '{print $3}'`
          LOGFILE=${LOGDIR}/clean-ora-traces_${ORACLE_SID}_`date +%F`.log
          #-----------------------------------------------------------
@@ -40,9 +42,14 @@ do
            then
              DIAGHOME=`adrci exec="show homes" | grep ${ORACLE_SID}`
              TRACEHOME=${ORACLE_BASE}"/"${DIAGHOME}"/"trace
-             find ${TRACE_HOME} -name "cor*" -mtime +${ret} -print -exec rm -Rf {} \; > $LOGSCR
-             find ${REPLOG}/udump -name "*.trc" -mtime +${ret} -print -exec rm -f {} \; > $LOGSCR
-             find ${REPLOG}/audit -name "*.aud" -mtime +${ret} -print -exec rm -f {} \; > $LOGSCR
+             find ${ORACLE_BASE}"/"${DIAGHOME}"/"cdump -name "*" -mtime +${ret} -exec rm -Rf {} \;
+             find ${TRACEHOME} -name "*.trc" -mtime +${ret} -exec rm -f {} \;
+             find ${TRACEHOME} -name "*.trm" -mtime +${ret} -exec rm -f {} \;
+             find ${TRACEHOME} -name "*.aud" -mtime +${ret} -exec rm -f {} \;
+             find ${TRACEHOME} -name alert_${ORACLE_SID}_* -ctime +${ret}
+             mv ${TRACEHOME}/alert_${ORACLE_SID}.log ${TRACEHOME}/alert_${ORACLE_SID}_`date +%F`.log
+             touch ${TRACEHOME}/alert_${ORACLE_SID}.log
+             find ${TRACEHOME} -name alert_${ORACLE_SID}_* -ctime +${ret}
            fi
          fi
          ;;

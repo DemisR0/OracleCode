@@ -1,0 +1,6 @@
+GREEN="\[$(tput setaf 2)\]"
+alias ll="ls -lhA"
+alias adf="df -Tha --total"
+alias adu="du -ach | sort -h"
+alias apf="ps -aux"
+export PS1="${GREEN}${HOSTNAME}:PP:${LOGNAME}:${ORACLE_SID}> "

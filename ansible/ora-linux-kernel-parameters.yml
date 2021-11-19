@@ -23,6 +23,11 @@
         - { regexp: '^kernel.shmmni', line: 'kernel.shmmni = 4096' }
         - { regexp: '^kernel.sem', line: 'kernel.sem = 250 32000 100 128' }
         - { regexp: '^net.ipv4.ip_local_port_range', line: 'net.ipv4.ip_local_port_range = 9000 65500' }
+        - { regexp: '^vm.swappiness', line: 'vm.swappiness = 1' }
+        - { regexp: '^vm.dirty_background_ratio', line: 'vm.dirty_background_ratio = 3' }
+        - { regexp: '^vm.dirty_ratio', line: 'vm.dirty_ratio = 80' }
+        - { regexp: '^vm.dirty_expire_centisecs', line: 'vm.dirty_expire_centisecs = 500' }
+        - { regexp: '^vm.dirty_writeback_centisecs', line: 'vm.dirty_writeback_centisecs = 100' }
     - name: ora - wmem_default live
       shell: sysctl -w net.core.rmem_default=262144
     - name: ora - wmem_default live
@@ -35,3 +40,13 @@
       shell: sysctl -w net.ipv4.ip_local_port_range="9000 65000"
     - name: ora - apply permanent kernel changes
       shell: /sbin/sysctl --system
+    - name: ora - swappiness
+      shell: echo 1 > /proc/sys/vm/swappiness
+    - name: ora - dirty_background_ratio
+      shell: echo 3 > /proc/sys/vm/dirty_background_ratio
+    - name: ora - dirty_ratio
+      shell: echo 80 > /proc/sys/vm/dirty_ratio
+    - name: ora - dirty_expire_centisecs
+      shell: echo 500 > /proc/sys/vm/dirty_expire_centisecs
+    - name: ora - dirty_writeback_centisecs
+      shell: echo 100 > /proc/sys/vm/dirty_writeback_centisecs

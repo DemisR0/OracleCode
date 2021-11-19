@@ -2,7 +2,7 @@
 - hosts: localhost
   connection: local
   become: true
-  tasks:  
+  tasks:
     - name: Install prereq packages for Oracle
       yum:
         name:
@@ -43,6 +43,9 @@
           - wireshark
           - openssh
           - nfsutils
-          - elfutils-libelf-devel 
+          - elfutils-libelf-devel
           - psmisc
+          - kernel-devel
+          - nfs-utils
+          - ntp
         state: latest
