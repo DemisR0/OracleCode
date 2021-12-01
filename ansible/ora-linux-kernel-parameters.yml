@@ -18,8 +18,8 @@
         - { regexp: '^net.core.wmem_max', line: 'net.core.wmem_max = 1048576' }
         - { regexp: '^fs.aio-max-nr', line: 'fs.aio-max-nr = 1048576' }
         - { regexp: '^fs.file-max', line: 'fs.file-max = 6815744' }
-        - { regexp: '^kernel.shmall', line: 'kernel.shmall = 45822771' }
-        - { regexp: '^kernel.shmmax', line: 'kernel.shmmax = 236223201280' }
+        - { regexp: '^kernel.shmall', line: 'kernel.shmall = 56413454' }
+        - { regexp: '^kernel.shmmax', line: 'kernel.shmmax = 231069507584' }
         - { regexp: '^kernel.shmmni', line: 'kernel.shmmni = 4096' }
         - { regexp: '^kernel.sem', line: 'kernel.sem = 250 32000 100 128' }
         - { regexp: '^net.ipv4.ip_local_port_range', line: 'net.ipv4.ip_local_port_range = 9000 65500' }
@@ -54,3 +54,7 @@
       shell: echo 100 > /proc/sys/vm/dirty_writeback_centisecs
     - name: ora - hugetlb_shm_group
       shell: echo 1001 > /proc/sys/vm/hugetlb_shm_group
+    - name: ora - shmmax
+      shell: echo 231069507584 > /proc/sys/kernel/shmmax
+    - name: ora - shmall
+      shell: echo 56413454 > /proc/sys/kernel/shmall
