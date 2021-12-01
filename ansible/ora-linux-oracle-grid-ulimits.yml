@@ -1,0 +1,30 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+# not tested
+  tasks:
+    - name: ora - ulimit profile script
+      lineinfile:
+        path: /etc/profile.d/oracle-grid.sh
+        state: present
+        create: yes
+        line: '{{ item }}'
+      with_items:
+        - Setting the appropriate ulimits for oracle and grid user
+        - if [ $USER = "oracle" ]; then
+        -     if [ $SHELL = "/bin/ksh" ]; then
+        -        ulimit -u 16384
+        -        ulimit -n 65536
+        -     else
+        -        ulimit -u 16384 -n 65536
+        -     fi
+        - fi
+        - if [ $USER = "grid" ]; then
+        -     if [ $SHELL = "/bin/ksh" ]; then
+        -        ulimit -u 16384
+        -        ulimit -n 65536
+        - else
+        -        ulimit -u 16384 -n 65536
+        -     fi 
+        - fi

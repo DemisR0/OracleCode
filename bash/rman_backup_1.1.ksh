@@ -1,18 +1,18 @@
 #!/usr/bin/ksh
 ##########################################################################################
 # Script name:      rman_backup_1.1.ksh
-# Description:      Rman Backup Script 
+# Description:      Rman Backup Script
 # Authors:          BaaS Team - Brno, Czech Republic
 #                   Milan Dufek <milan_dufek@cz.ibm.com>
 # Version:          1.1.1 (27.04.2018)
 # Supported OS:     AIX, Linux, (TODO: Solaris, HP-UX)
-#       
-# Req. files:       rman_functions_1.1.ksh (functions libr) 
+#
+# Req. files:       rman_functions_1.1.ksh (functions libr)
 #                   rman_backup.ini (default init file)
 # Optional files:   rman_backup_INSTANCE.ini (init file for each instance)
-# 
+#
 # Script usage:     rman_backup.sh [ FUNCTION ] [ ORACLE_SID ] [ DELETE_OBSOLETE_RETENTION ]
-#       
+#
 ##########################################################################################
 # List of return codes:
 # ----- GENERIC RETURN CODES -------------------------------------------------------------
@@ -24,14 +24,14 @@ readonly ERR_WRONG_USER=14               # 14 - Script started under wrong UNIX 
 readonly ERR_NO_INST_RUNNING=15          # 15 - No Oracle instance is running for $ORACLE_SID inst
 readonly ERR_ALREADY_RUNNING=16          # 16 - Script is already running for $ORACLE_SID inst
 readonly ERR_ORAENV=17                   # 17 - Unable to load . oraenv
-readonly ERR_NO_TSMOPT=18                # 18 - TSM opt file not found for $ORACLE_SID inst
+readonly ERR_NO_VEEAM=18                # 18 - TSM opt file not found for $ORACLE_SID inst
 readonly ERR_OFFLINE_IN_BU=19            # 19 - OFFLINE backup started in busness hours and denied
 # ------ SPECIFIC DELETE OBSOLETE RETURN CODES -------------------------------------------
 readonly ERR_LOWER_CFRKT=21              # 21 = Value of CONTROL_FILE_RECORD_KEEP_TIME in RMAN is lower that expected (delobs_days + EXTRA_RETENTION)
 readonly ERR_LOWER_RETPOL=22             # 22 = Value of RETENTION POLICY TO RECOVERY in RMAN catalog is lower that expected (delobs_days + EXTRA_RETENTION)
 readonly ERR_GET_API_FS=23               # 23 = Cannot determine number of API:ORACLE filespaces
 readonly ERR_TSM_CLIENT=24               # 24 = Problem on TSM client side configuration
-readonly ERR_GET_RMAN_BO=25              # 25 = Cannot get Rman backup object list 
+readonly ERR_GET_RMAN_BO=25              # 25 = Cannot get Rman backup object list
 readonly ERR_OBS_TSM_DATA=26             # 26 = Obsolete TSM data found
 readonly ERR_MORE_API_FS=27              # 27 = More than one API:ORACLE filespace found
 readonly ERR_GET_SQLPLUS=28              # 28 = Cannot get information from sqlplus (e.g. control_record_keeptime)
@@ -44,7 +44,7 @@ readonly ERR_DB_STARTUP=31               # 31 - Problem during DB startup
 if [[ "$1" == "-info" || "$1" == "-help" ]]; then
     END_HELP=$(cat -n $0 | grep -E "\#-\#" | awk '{ print $1 }')
     head -$END_HELP $0
-    exit 1 
+    exit 1
 fi
 
 # vars definition
@@ -83,7 +83,7 @@ if [[ -e $RMAN_FUNCTIONS && -e $RMAN_INIT ]]; then
         else
             printMsg "Init file ($RMAN_INIT) cannot be loaded"
             exitScript $ERR_NO_INIT
-        fi   
+        fi
     else
         echo "Rman fucntions ($RMAN_FUNCTIONS) file cannot be loaded" >>$LOG
         exit $ERR_NO_INIT
@@ -116,9 +116,9 @@ if [ "$OS" == "hp-ux" ]; then
     echo >/dev/null # TBD
 fi
 
-# check, parse and load arguments 
+# check, parse and load arguments
 if [ $# -lt 2 ]; then
-    printMsg "Insufficient number of arguments (2)" 
+    printMsg "Insufficient number of arguments (2)"
     printMsg "Script usage: $0 [FUNCTION] [ORACLE_SID]"
     printMsg "Check script usage: $0 --info"
     exitScript $ERR_INSUFF_ARGS
@@ -129,7 +129,7 @@ else
     ORACLE_VERSION=$(cat /etc/oratab | grep -v "^[#\*]" | grep -w ${ORACLE_SID} | sed 's/.*[product|oracle]\/\([0-9][0-9]*[a-z]*\).*/\1/g')
     [ -z "$ORACLE_VERSION" ] && ORACLE_VERSION=UNKNOWN
     ORACLE_VERSION_SHORT=$(cat /etc/oratab | grep -v "^[#\*]" | grep -w ${ORACLE_SID} | sed 's/.*[product|oracle]\/\([0-9][0-9]*\).*/\1/g')
-fi 
+fi
 
 echo $FUNCTION | grep -Eq "delete_obsolete|backup_archivelog_emergency"
 if [ $? -eq 0 ]; then
@@ -179,7 +179,7 @@ if [ $? -eq 0 ]; then
             [ ! -z "$FILESPERSET_IL0" ] && FILESPERSET=$FILESPERSET_IL0
             ;;
         inc1)
-            # from version 10 there is a change of incrementla strategy  
+            # from version 10 there is a change of incrementla strategy
             if [ $ORACLE_VERSION_SHORT -ge 10 ]; then
                 BACKUP_TYPE="incremental level = 1 cumulative"
             else
@@ -190,10 +190,10 @@ if [ $? -eq 0 ]; then
             ;;
         inc2)
             # from version 10 there is a change of incrementla strategy
-            if [ $ORACLE_VERSION_SHORT -ge 10 ]; then 
+            if [ $ORACLE_VERSION_SHORT -ge 10 ]; then
                 BACKUP_TYPE="incremental level = 1"
             else
-                BACKUP_TYPE="incremental level = 2"    
+                BACKUP_TYPE="incremental level = 2"
             fi
             BACKUP_TAG="${TAG_BDB}_${TAG_L2}_$ONOFF"
             [ ! -z "$FILESPERSET_IL2" ] && FILESPERSET=$FILESPERSET_IL2
@@ -204,7 +204,7 @@ if [ $? -eq 0 ]; then
             [ ! -z "$FILESPERSET_IL0" ] && FILESPERSET=$FILESPERSET_IL0
             ;;
         *)
-            printMsg "Rman function $FUNCTION is not defined in $RMAN_FUNCTIONS" 
+            printMsg "Rman function $FUNCTION is not defined in $RMAN_FUNCTIONS"
             exitScript $ERR_NO_FNC_DEF
             ;;
     esac
@@ -222,13 +222,10 @@ else
 fi
 
 # check optfile
-if [ -f "${OPTFILE_PATH}/tdpo_${ORACLE_SID}.opt" ]; then
-    TDPO_OPTFILE="${OPTFILE_PATH}/tdpo_${ORACLE_SID}.opt"
-    DSMI_OPTFILE=$(grep -iw DSMI_ORC_CONFIG $TDPO_OPTFILE | awk '{ print $2 }')
-    TDPO_FS=$(grep -iw TDPO_FS $TDPO_OPTFILE | awk '{ print $2 }')
-    TDPO_NODE=$(grep -iw TDPO_NODE $TDPO_OPTFILE | awk '{ print $2 }')
+if [ -f "${VEEAM_LIB_FOLDER}/tdpo_${ORACLE_SID}.opt" ]; then
+    TDPO_OPTFILE="${VEEAM_LIB_FOLDER}/tdpo_${ORACLE_SID}.opt"
 else
-    printMsg "TSM opt (${OPTFILE_PATH}/tdpo_${ORACLE_SID}.opt) file not found"
+    printMsg "TSM opt (${VEEAM_LIB_FOLDER}/tdpo_${ORACLE_SID}.opt) file not found"
     exitScript $ERR_NO_TSMOPT
 fi
 
@@ -236,8 +233,8 @@ fi
 ls -1 $TMP_DIR | grep -q $BASENAME.$FUNCTION.*.${ORACLE_SID}.pid
 if [ $? -eq 0 ]; then
     for pid in $(cat ${TMP_DIR}/$BASENAME.$FUNCTION.*.${ORACLE_SID}.pid | cut -d ':' -f 4); do
-        ps -p $pid 
-        if [ $? -eq 0 ]; then 
+        ps -p $pid
+        if [ $? -eq 0 ]; then
             printMsg "Running process related to rman backup for $ORACLE_SID instance found"
             printFile ${TMP_DIR}/$BASENAME.$FUNCTION.$pid.${ORACLE_SID}.pid
             exitScript $ERR_ALREADY_RUNNING
@@ -245,7 +242,7 @@ if [ $? -eq 0 ]; then
             printMsg "Cleaning old PID files from unfinished backups..."
             rm -f ${TMP_DIR}/$BASENAME.$FUNCTION.$pid.${ORACLE_SID}.pid ${TMP_DIR}/$pid.*.* ${WORK_DIR}/$pid.*.*
         fi
-    done  
+    done
 fi
 
 # set Rman connection
@@ -253,7 +250,7 @@ if [[ -z "$RMAN_CATALOG" || "$RMAN_CATALOG" == "NOCATALOG" ]]; then
     RMAN_CATALOG=NOCATALOG
     RMAN_CONNECTION="rman target / nocatalog"
 else
-    RMAN_CONNECTION="rman target / rcvcat=${RMAN_CATALOG_USER}/${RMAN_CATALOG_PASS}@${RMAN_CATALOG}" 
+    RMAN_CONNECTION="rman target / rcvcat=${RMAN_CATALOG_USER}/${RMAN_CATALOG_PASS}@${RMAN_CATALOG}"
 fi
 
 # prepare Oracle environment to load
@@ -276,8 +273,8 @@ echo "$UNIX_USER:$FUNCTION:$ORACLE_SID:$$:$(date '+%Y%m%d%H%M%S')" > $PIDFILE
 if $OFFLINE_BACKUP; then
     inBussinessHours $BUSINESS_HOURS_FROM $BUSINESS_HOURS_TO
     if [ $? -eq 0 ]; then
-        printMsg "OFFLINE backup in business hours is denied!" 
-        exitScript $ERR_OFFLINE_IN_BU    
+        printMsg "OFFLINE backup in business hours is denied!"
+        exitScript $ERR_OFFLINE_IN_BU
     fi
     for i in 3 2 1; do
         printMsg "Offline backup for ${ORACLE_SID} will start in $i minutes! Use this command to abort it: kill $$"
@@ -317,7 +314,7 @@ chmod 744 $RMAN_SCRIPT
 su - $ORA_USER -c "$ORAENV; $RMAN_CONNECTION @$RMAN_SCRIPT" >>$LOG 2>&1
 RMAN_RC=$?
 rm -f $RMAN_SCRIPT $PIDFILE
-printMsg 
+printMsg
 printMsg "End of RMAN function $FUNCTION: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # start-up the database
@@ -326,7 +323,7 @@ if $OFFLINE_BACKUP; then
     dbStartup $ORACLE_SID >$DB_STARTUP
     chown $ORA_USER $DB_STARTUP
     chmod 744 $DB_STARTUP
-    $DB_STARTUP >>$LOG 2>&1   
+    $DB_STARTUP >>$LOG 2>&1
     if [ $? -eq 0 ]; then
         printMsg "Database started up succesfully"
     else
@@ -349,10 +346,10 @@ if [[ $? -eq 0 && $RMAN_RC -eq 0 ]]; then
     else
         # cross-check value of CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF XX DAYS if catalog is used >= delete obsolete in days + EXTRA_RETENTION
         checkRetentionPolicy || exitScript $ERR_LOWER_RETPOL
-    fi  
+    fi
     # check of obsolete backup data on TSM delete obsolete days + EXTRA_RETENTION
-    checkUndeletedBackups || exitScript $?   
-    # check if there are multiple filespaces for API:ORACLE under same TSM NODE 
+    checkUndeletedBackups || exitScript $?
+    # check if there are multiple filespaces for API:ORACLE under same TSM NODE
     [ "$CHECK_FILESPACES" == "yes" ] && checkFilespaces || exitScript $?
 fi
 
@@ -362,4 +359,3 @@ printMsg "$FUNCTION $BACKUP_TYPE finished for instance ${ORACLE_SID}"
 printMsg "End time: $(date '+%Y-%m-%d %H:%M:%S')"
 
 exitScript $RMAN_RC
-

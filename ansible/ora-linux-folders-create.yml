@@ -17,7 +17,9 @@
         - { name: /u01/app/oracle/product/19.0.0/dbhome_1 }
         - { name: /u01/app/oracle/product/12.2.0/dbhome_1 }
         - { name: /u01/app/oracle/product/12.1.0/dbhome_1 }
-        - { name: /u01/app/oracle/product/11.2.0/dbhome_1 }        
+        - { name: /u01/app/oracle/product/11.2.0/dbhome_1 }
         - { name: /u02/app/oracle/oradata }
-        - { name: /u03/app/oracle }
-        - { name: /u04/app/oracle }
+        - { name: /u03/app/oracle/redo }
+        - { name: /u04/app/oracle/redo }
+        - { name: /u04/app/oracle/archivelogs }
+        - { name: /u01/apps/oracle/wallet }

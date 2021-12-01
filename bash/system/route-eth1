@@ -1,11 +1,8 @@
-ANFIP="10.138.64.36"
-FILEPATH="backuporacle"
-MOUNTPOINT="backuporacle"
 nmcli con show
-nmcli con modify 9baf29b5-cea7-3a14-b2c5-c93d7bb632f1 +ipv4.routes "10.138.64.32/27 10.238.64.17"
+nmcli con modify "Wired connection 2" +ipv4.routes "10.238.64.32/27 10.238.64.17"
 nmcli con reload
-nmcli con up "Wired connection 1"
+nmcli con up "Wired connection 2"
 setsebool virt_use_nfs on
-mount -t nfs -o rw,bg,nointr,hard,rsize=32768,wsize=32768,vers=3,tcp,sec=sys,vers=3,timeo=600,_netdev $ANFIP:/$FILEPATH /$MOUNTPOINT
-
- ip route add 10.238.64.32/27 via 10.238.64.17
+mount -vvvv -t nfs -o rw,bg,nointr,hard,rsize=262144,wsize=262144,vers=3,tcp,sec=sys,timeo=600,retry=1 10.238.64.36:/backuporacle /backuporacle
+mount -vvvv -t nfs -o rw,bg,nointr,hard,rsize=32768,wsize=32768,vers=3,tcp,sec=sys,timeo=600 10.238.64.37:/ppdoradata01 /u02
+# activation des perf reseau accelerees
