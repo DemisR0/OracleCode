@@ -1,7 +1,7 @@
 export ORAENV_ASK=NO
 export ORACLE_SID=$1
 BACKUP_PATH=/backuporacle/${ORACLE_SID}
-CTLFILEBCK=`ls /backuporacle/HRA00R/*_CTRL_*`
+CTLFILEBCK=`ls /backuporacle/${ORACLE_SID}/*_CTRL_*`
 LOG=/backuporacle/${ORACLE_SID}/restore_${ORACLE_SID}_`date +%y%d%m_%H%m`.log
 ORADATA=/u02/app/oracle/oradata/${ORACLE_SID}/${ORACLE_SID}
 
@@ -23,7 +23,7 @@ mkdir -p /u02/app/oracle/oradata/${ORACLE_SID}/${ORACLE_SID}
 mkdir -p /u03/app/oracle/fast_recovery_area/${ORACLE_SID}/${ORACLE_SID}/arch
 mkdir -p /u03/app/oracle/redo/${ORACLE_SID}
 mkdir -p /u04/app/oracle/redo/${ORACLE_SID}
-mkdir -p /u01/app/oracle/admin/HRA00R/adump
+mkdir -p /u01/app/oracle/admin/${ORACLE_SID}/adump
 
 printf 'done\n-------\n' >> $LOG
 
@@ -43,6 +43,12 @@ fi
 cat /dev/null > restore${ORACLE_SID}_catalog.rman
 printf '-------\ncatalog backup pieces from ${BACKUP_PATH} \n' >> $LOG
 for bckpiece in `ls $BACKUP_PATH/*MANU_DB_FULL*.bkp`
+do
+  printf "CATALOG DEVICE TYPE 'DISK' BACKUPPIECE '${bckpiece}';\n" >> restore${ORACLE_SID}_catalog.rman
+done
+
+printf '-------\ncatalog backup pieces from ${BACKUP_PATH} \n' >> $LOG
+for bckpiece in `ls $BACKUP_PATH/*MANU_LOGS_*.bkp`
 do
   printf "CATALOG DEVICE TYPE 'DISK' BACKUPPIECE '${bckpiece}';\n" >> restore${ORACLE_SID}_catalog.rman
 done

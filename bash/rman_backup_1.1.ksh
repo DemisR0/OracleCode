@@ -222,8 +222,8 @@ else
 fi
 
 # check optfile
-if [ -f "${VEEAM_LIB_FOLDER}/tdpo_${ORACLE_SID}.opt" ]; then
-    TDPO_OPTFILE="${VEEAM_LIB_FOLDER}/tdpo_${ORACLE_SID}.opt"
+if [ -f "${VEEAM_LIB_PATH}" ]; then
+    TDPO_OPTFILE="${VEEAM_LIB_PATH}/tdpo_${ORACLE_SID}.opt"
 else
     printMsg "TSM opt (${VEEAM_LIB_FOLDER}/tdpo_${ORACLE_SID}.opt) file not found"
     exitScript $ERR_NO_TSMOPT
