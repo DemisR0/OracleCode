@@ -19,7 +19,7 @@
         - { regexp: '^fs.aio-max-nr', line: 'fs.aio-max-nr = 1048576' }
         - { regexp: '^fs.file-max', line: 'fs.file-max = 6815744' }
         - { regexp: '^kernel.shmall', line: 'kernel.shmall = 56413454' }
-        - { regexp: '^kernel.shmmax', line: 'kernel.shmmax = 231069507584' }
+        - { regexp: '^kernel.shmmax', line: 'kernel.shmmax = 115894910976' }
         - { regexp: '^kernel.shmmni', line: 'kernel.shmmni = 4096' }
         - { regexp: '^kernel.sem', line: 'kernel.sem = 250 32000 100 128' }
         - { regexp: '^net.ipv4.ip_local_port_range', line: 'net.ipv4.ip_local_port_range = 9000 65500' }
@@ -28,7 +28,7 @@
         - { regexp: '^vm.dirty_ratio', line: 'vm.dirty_ratio = 80' }
         - { regexp: '^vm.dirty_expire_centisecs', line: 'vm.dirty_expire_centisecs = 500' }
         - { regexp: '^vm.dirty_writeback_centisecs', line: 'vm.dirty_writeback_centisecs = 100' }
-        - { regexp: '^vm.nr_hugepages', line: 'vm.nr_hugepages = 153600' }
+        - { regexp: '^vm.nr_hugepages', line: 'vm.nr_hugepages = 86016' }
         - { regexp: '^vm.hugetlb_shm_group=1001', line: 'vm.hugetlb_shm_group = 1001' }
     - name: ora - wmem_default live
       shell: sysctl -w net.core.rmem_default=262144

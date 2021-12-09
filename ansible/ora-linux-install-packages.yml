@@ -47,5 +47,4 @@
           - psmisc
           - kernel-devel
           - nfs-utils
-          - ntp
         state: latest

@@ -16,8 +16,8 @@ ret=30
 ORATAB=/etc/oratab
 ORACLE_BASE=/u01/app/oracle
 LOGDIR=/exploit/logs/dba/housekeeping
-
-find ${LOGDIR} -name clean-ora-traces_* -mtime +7 -exec rm {} \;
+LOGFILE=${LOGDIR}/oraTracesHousekeeping_`date +%F`.log
+find ${LOGDIR} -name oraTracesHousekeeping_* -mtime +7 -exec rm {} \;
 
 #-------------------------------
 # Pour chaque ligne de l'oratab
@@ -32,7 +32,7 @@ do
          ORAENV_ASK=NO
          . oraenv
          ACTIVE=`echo ${LINE} | awk -F: '{print $3}'`
-         LOGFILE=${LOGDIR}/clean-ora-traces_${ORACLE_SID}_`date +%F`.log
+         echo 'cleaning trace files for '${ORACLE_SID} >> ${LOGFILE}
          #-----------------------------------------------------------
          # teste si la variable ORACLE_SID est de longueur non nulle
          #-----------------------------------------------------------
@@ -42,6 +42,7 @@ do
            then
              DIAGHOME=`adrci exec="show homes" | grep ${ORACLE_SID}`
              TRACEHOME=${ORACLE_BASE}"/"${DIAGHOME}"/"trace
+             echo 'trace home :'$TRACEHOME >> ${LOGFILE}
              find ${ORACLE_BASE}"/"${DIAGHOME}"/"cdump -name "*" -mtime +${ret} -exec rm -Rf {} \;
              find ${TRACEHOME} -name "*.trc" -mtime +${ret} -exec rm -f {} \;
              find ${TRACEHOME} -name "*.trm" -mtime +${ret} -exec rm -f {} \;
@@ -50,6 +51,7 @@ do
              mv ${TRACEHOME}/alert_${ORACLE_SID}.log ${TRACEHOME}/alert_${ORACLE_SID}_`date +%F`.log
              touch ${TRACEHOME}/alert_${ORACLE_SID}.log
              find ${TRACEHOME} -name alert_${ORACLE_SID}_* -ctime +${ret}
+             echo '-----------' >> ${LOGFILE}
            fi
          fi
          ;;
@@ -59,11 +61,11 @@ done
 RET1=$?
 if [ "$RET1" = "0" ]
         then
-               echo "Traitement OK"
+               echo "Traitement OK" >> ${LOGFILE}
                STATUT=0
         else
-    echo " Traitement KO"
+    echo " Traitement KO" >> ${LOGFILE}
     STATUT=1
 fi
-echo "FIN DU TRAITEMENT"
+echo "FIN DU TRAITEMENT" >> ${LOGFILE}
 exit $STATUT
