@@ -1,0 +1,38 @@
+# visudo -f /etc/sudoers.d/154_SCIENCELOGICL_RMIS_GLB
+# Begin ScienceLogic standard template Ver 1.0.0 Date 2020-08-01  * Master * Refer xxxxx Begin #
+# Description : This is for science Logic monitoring application to work
+# Software products and versions
+# Supported OS platforms - Linux
+# local functional ID
+#
+# Version control
+# V1.0.0 - shan.sunny@in.ibm.com - for Science Logic monitoring to work
+#
+# There are requirements for log file monitoring for every customer to monitor different log files in different paths.
+# The Vendor has built a separate new solution specifically for IBM and Hence the same is not available in vendor documentation yet. Link for the vendor email statement on the same is mentioned below
+# https://ibm.box.com/s/s5sssyobv1vvlwaoulsicemn4mv1lzxa
+# Limiting to scoped commands will limit the future monitoring enhanancements provided by the vendor.
+#
+#=====================================================================================
+#
+# Replace sample group names with real group names for your account
+#
+User_Alias      IBM_SLOGIC_BAU = %sl1mon
+
+
+Host_Alias      SLOGIC_HOSTS = ALL # List the systems this template
+                    # will be active on.
+
+Cmnd_Alias IBM_SLOGIC_BAU_CMDS = \
+   /sbin/dmidecode, \
+   /usr/sbin/dmidecode, \
+   /bin/cat, \
+   /usr/bin/cat, \
+   /bin/tail, \
+   /usr/bin/tail
+
+
+# Assigned To group
+IBM_SLOGIC_BAU  SLOGIC_HOSTS = NOPASSWD:IBM_SLOGIC_BAU_CMDS
+
+# End ScienceLogic standard template Ver 1.0.0 Date 2020-08-01    * Master * Refer xxxxx End #
