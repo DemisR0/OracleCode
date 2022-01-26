@@ -1,8 +1,20 @@
 nmcli con show
-nmcli con modify "Wired connection 2" +ipv4.routes "10.238.64.32/27 10.238.64.17"
+nmcli con modify "Wired connection 2" +ipv4.routes "10.238.64.32/27 10.238.64.33"
 nmcli con reload
 nmcli con up "Wired connection 2"
-setsebool virt_use_nfs on
-mount -vvvv -t nfs -o rw,bg,nointr,hard,rsize=262144,wsize=262144,vers=3,tcp,sec=sys,timeo=600,nconnect=8,retry=1 10.238.64.36:/backuporacle /backuporacle
+
+mount -vvvv -t nfs -o rw,bg,nointr,hard,rsize=262144,wsize=262144,vers=3,tcp,sec=sys,timeo=600,retry=1 10.238.64.36:/backuporacle /backuporacle
 mount -vvvv -t nfs -o rw,bg,nointr,hard,rsize=32768,wsize=32768,vers=3,tcp,sec=sys,timeo=600 10.238.64.37:/ppdoradata01 /u02
 # activation des perf reseau accelerees
+
+sudo mount -t nfs -o rw,bg,nointr,hard,rsize=32768,wsize=32768,vers=3,tcp,sec=sys,timeo=600 10.238.8.36:/export002 /u02
+
+# prod
+nmcli con modify "Wired connection 2" +ipv4.routes "10.238.8.32/27 10.238.8.17"
+
+# remove ip
+nmcli con modify "Wired connection 1" -ipv4.routes "10.238.8.32/27 10.238.8.33"
+                                                     netapp net      machine eth1 default gateway
+
+
+                                                     mount -vvvv -t nfs -o rw,bg,nointr,hard,rsize=262144,wsize=262144,vers=3,tcp,sec=sys,timeo=600,retry=1 10.238.8.36:/backuporacle /backuporacle
