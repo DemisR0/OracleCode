@@ -1,5 +1,5 @@
 nmcli con show
-nmcli con modify "Wired connection 2" +ipv4.routes "10.238.64.32/27 10.238.64.33"
+nmcli con modify "eth1" +ipv4.routes "10.238.64.32/27 10.238.64.17"
 nmcli con reload
 nmcli con up "Wired connection 2"
 
@@ -18,3 +18,5 @@ nmcli con modify "Wired connection 1" -ipv4.routes "10.238.8.32/27 10.238.8.33"
 
 
                                                      mount -vvvv -t nfs -o rw,bg,nointr,hard,rsize=262144,wsize=262144,vers=3,tcp,sec=sys,timeo=600,retry=1 10.238.8.36:/backuporacle /backuporacle
+
+nmcli con add
