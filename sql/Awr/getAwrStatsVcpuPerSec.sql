@@ -1,10 +1,13 @@
+## fonctionne uniquement sur mono instance_name
+## PB de redondance de l'instance name par rapport au dbid et a l' instance_number
+
 set pagesize 4000
 with db_time as (
 select ss.snap_id,dbi.instance_name,sn.dbid,dbi.instance_number,ss.value
-from SYS.WRH$_SYS_TIME_MODEL ss 
-inner join SYS.WRM$_DATABASE_INSTANCE dbi on dbi.dbid=ss.dbid 
+from SYS.WRH$_SYS_TIME_MODEL ss
+inner join SYS.WRM$_DATABASE_INSTANCE dbi on dbi.dbid=ss.dbid
 and dbi.instance_number=ss.instance_number
-inner join SYS.WRH$_STAT_NAME sn on sn.dbid = ss.dbid 
+inner join SYS.WRH$_STAT_NAME sn on sn.dbid = ss.dbid
 and sn.stat_id=ss.stat_id
 where sn.stat_name='DB CPU'
 order by snap_id),
