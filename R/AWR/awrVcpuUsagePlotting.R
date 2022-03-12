@@ -11,24 +11,17 @@ library(RODBC)
 library(dplyr)
 library(dbplyr)
 library(lubridate)
+library(ggplot2)
 
 Sys.setenv(JAVA_HOME='C:/app/oracle/Client21c/jdk')
 
 # Constantes
 dbid = 783443023    # FAC=783443023  DWH=2282045280
-Instbm1 = 'FAC1'
-Instbm2 = 'FAC2'
-Instam = 'FAC'
+Instbm1 = 'DWH1'
+Instbm2 = 'DWH2'
+Instam = 'DWH'
 
 # functions
-
-round.off <- function (x, digits=1) 
-{
-  posneg = sign(x)
-  z = trunc(abs(x) * 10 ^ (digits + 1)) / 10
-  z = floor(z * posneg + 0.5) / 10 ^ digits
-  return(z)
-} 
 
 dbconn  <- odbcConnect("oraanalysis",uid = "system",
                    pwd = "putain2mot2pass")
@@ -54,7 +47,7 @@ INNER JOIN SYS.WRM$_DATABASE_INSTANCE di
 ON di.dbid=snaps.dbid
 AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
-AND begin_interval_time > sysdate-10
+AND begin_interval_time > sysdate-20
 ),
 fgbgcpu AS(
 SELECT snap_id,dbid,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
@@ -87,8 +80,10 @@ instBmDf <- instAllBmDf %>%  mutate(VCPU = VCPU.x + VCPU.y) %>%
 
 
 head(instBmDf,20)
+instAllDf <- union(instBmDf,instAmDf)
 
-union(instBmDf,instAmDf)
+ggplot(data=instAllDf)	+ geom_line(aes(x=END_INTERVAL_TIME,	y=VCPU, color = "darkgreen"))
+
 
 odbcClose(dbconn)
 
