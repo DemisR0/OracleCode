@@ -49,7 +49,7 @@ FROM SYS.WRH$_SYS_TIME_MODEL sysst
 INNER JOIN SYS.WRH$_STAT_NAME n
 ON n.stat_id=sysst.stat_id
 AND n.dbid=sysst.dbid
-AND n.stat_name='DB CPU'
+AND n.stat_name in ('DB CPU','background cpu time')
 INNER JOIN SYS.WRM$_SNAPSHOT snaps
 ON snaps.snap_id = sysst.snap_id
 AND snaps.dbid = sysst.dbid
@@ -60,9 +60,9 @@ AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
 AND begin_interval_time > sysdate-10
 )
-SELECT snap_id,instance_name,end_interval_time,round(stat_value/(DELTA)/1000000,1)
+SELECT snap_id,instance_name,end_interval_time,round(stat_value/(DELTA)/1000000,1)*1.1
 FROM cpu
-WHERE instance_name='FAC1'
+WHERE instance_name='DWH00I'
 ORDER BY snap_id;
 
 -- retour en min CPU pour X mn durée du report ajout background cpu pour se rapprocher des stats awr
@@ -87,12 +87,12 @@ INNER JOIN SYS.WRM$_DATABASE_INSTANCE di
 ON di.dbid=snaps.dbid
 AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
-AND begin_interval_time > sysdate-10
+AND begin_interval_time > sysdate-90
 ),
 fgbgcpu AS(
 SELECT snap_id,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
 FROM cpu
 )
-SELECT snap_id,instance_name,end_interval_time,round((fgcpu+bgcpu)/(DELTA*1000000/60),2) Vcpu
+SELECT snap_id,instance_name,end_interval_time,round((fgcpu+bgcpu)/(DELTA*1000000/60),2) Vcpu_mnh
 FROM fgbgcpu
 WHERE bgcpu IS NOT NULL;
