@@ -42,7 +42,8 @@ def connectSsh (sName,srvName,userName,password,socksServer = '',socksSrvPort = 
     sshCommand='sshpass -p \''+password+'\' ssh "'+userName+'"@'+srvName
     if socksServer != '':
         sshCommand = sshCommand + ' -o "ProxyCommand=nc -X 5 -x ' + socksServer + ':' + socksSrvPort + ' %h %p"'
-        os.system('tmux send-key -t ' + sName + '\'' + sshCommand + '\' Enter' )
+        print('tmux send-key -t ' + sName + ' \'' + sshCommand + '\' Enter')
+        os.system('tmux send-key -t ' + sName + ' \'' + sshCommand + '\' Enter' )
         print(os.popen('tmux capture-pane -pS -3 -t ' + sName ).read())
         #os.system('tmux capture-pane -pS -100 -t ' + sName )
     time.sleep(5)
@@ -53,12 +54,15 @@ def wallixSelection(sName,srvName,userName,password):
     select server in wallix menu
     """
     lines = os.popen('tmux capture-pane -pS -100 -t ' + sName ).readlines()
-    print(srvName+" "+userName+ " "+password)
+    print(srvName + " " + userName + " " + password)
     for line in lines:
+        print(line)
         if line.find(srvName) !=-1 :
             srvNum=line.split(" | ")[0].lstrip("| ")
             print('"'+srvNum+'"')
             os.system('tmux send-key -t ' + sName + ' ' + srvNum + ' Enter')
+            time.sleep(5)
+            os.system('tmux send-key -t ' + sName + ' \'' + userName + '\' Enter')
             time.sleep(5)
             os.system('tmux send-key -t ' + sName + ' \'' + password + '\' Enter')
             break
@@ -80,15 +84,25 @@ sessionBName = customer + '_ssh'
 domain = 'ssh'
 serverName = '15.1.92.247'
 oracleServer = 'vmlpdtbora010'
+sessionName = ''
 
-sessionName = sessionBName + 'S' + '_' + dateTime()
-windowsName = sessionBName + 'W' + '_' + dateTime()
+# search for an existing
+for line in os.popen('tmux ls','r').readlines():
+    if line.find(sessionBName) != -1:
+        print('Do you want to reuse session: ' + line.split(':')[0] + '? [y/n] ', end="")
+        if input() == 'y':
+            sessionName = line.split(':')[0]
+            break
 
-print ('please open a terminal window and launch "' + 'tmux new -s ' + sessionName + ' -n ' + windowsName + '"')
-print ('press y then return when you are ready: ', end="" )
-reply = input()
-if reply != 'y':
-    logging.info('exiting, have a nice day')
+# if no session has been found request creation of a new one
+if sessionName == '':
+    sessionName = sessionBName + 'S' + '_' + dateTime()
+    windowsName = sessionBName + 'W' + '_' + dateTime()
+    print ('please open a terminal window and launch "' + 'tmux new -s ' + sessionName + ' -n ' + windowsName + '"')
+    print ('press y then return when you are ready: ', end="" )
+    reply = input()
+    if reply != 'y':
+        logging.info('exiting, have a nice day')
 
 logging.info('checking if tmux session exists ...')
 if os.popen('tmux ls','r').read().find(sessionName) == -1:
@@ -97,3 +111,6 @@ if os.popen('tmux ls','r').read().find(sessionName) == -1:
 
 tUserPass = readPwd(customer,domain,serverName)
 connectSsh(sessionName,serverName,tUserPass[0],tUserPass[1],socks5)
+
+wUserPass = readPwd(customer,'wallix',oracleServer)
+wallixSelection(sessionName,oracleServer,wUserPass[0],wUserPass[1])
