@@ -22,7 +22,7 @@ def readPwd(customer,domain,srvName):
     try:
         pwdFilePtr = open(filePath,'r')
     except Exception as diag:
-        logging.error(diag.__class__.__name__,':','readPwdFile',':',diag)
+        logging.error('readPwdFile',':',diag)
         return False
 
     for line in pwdFilePtr:
@@ -72,8 +72,9 @@ def tmuxClear(sName):
     """
     clear terminal history
     """
-    os.system('tmux send-key -t ' + sName + ' clear Enter')
-    os.system('tmux clear-history')
+    for i in range(0,3):
+        os.system('tmux send-key -t ' + sName + ' clear Enter')
+        os.system('tmux clear-history')
     return True
 ##-----------------------
 def sudo(sName,userName):
@@ -95,13 +96,19 @@ def executeBash(sName,bashFile):
     try:
         bashFilePtr = open(bashFile,'r')
     except Exception as diag:
-        logging.error(diag.__class__.__name__,':','executeBash',':',diag)
+        logging.error('executeBash',':',diag)
         return False
-
-    for line in bashFilePtr.readlines():
-
-
-
+    tmuxClear(sName)
+    for line in bashFilePtr.read().splitlines():
+        os.system('tmux send-key -t ' + sName + ' \'' + line.rstrip() + '\' Enter')
+    # check if oracle raised any error
+    outPut = os.popen('tmux capture-pane -pS -100 -t ' + sName ).read()
+    if outPut.find('ORA-') != -1:
+        logging.error('executeBash',': oracle error occured')
+        logging.error(' '.join(line.split()))
+        return False
+    return True
+##-----------------------
 """
   MAIN
   V0 : monosession
@@ -109,10 +116,14 @@ def executeBash(sName,bashFile):
 
 # Parameters
 socks5 = '129.39.133.102'
-serverName = '15.1.92.247'
-oracleServer = 'vmlpdtbora010'
+wallixKOP = '15.1.92.188'
+wallixKAz = '15.1.92.247'
+serverName = wallixKAz
+oracleServer = 'vml0dtbora000'
 customer = 'korian'
 sudoUser = 'oracle'
+BashScriptPath='/mnt/c/oracle/OracleCode/python/autoBash/Scripts/' # \\ so \ is not seen as special
+scriptName='oraChgAwrParamAllDb.bash'
 
 # Other variables
 sessionBName = customer + '_ssh'
@@ -143,10 +154,13 @@ if os.popen('tmux ls','r').read().find(sessionName) == -1:
 
 tUserPass = readPwd(customer,'ssh',serverName)
 connectSsh(sessionName,serverName,tUserPass[0],tUserPass[1],socks5)
+tmuxClear(sessionName)
 
 wUserPass = readPwd(customer,'wallix',oracleServer)
 if not wallixSelection(sessionName,oracleServer,wUserPass[0],wUserPass[1]):
     logging.error('wallixSelection: Unable to select a server')
 
-if not sudo(sessionName,sudoUser):
+if sudo(sessionName,sudoUser) != True :
     logging.error('sudo : Unable to sudo as ' + sudoUser)
+
+executeBash(sessionName,BashScriptPath + scriptName)
