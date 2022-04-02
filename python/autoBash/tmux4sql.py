@@ -89,7 +89,7 @@ def sudo(sName,userName):
         return True
     return False
 ##-----------------------
-def executeBash(sName,bashFile):
+def executeBashNoData(sName,bashFile):
     """
     exec a loop to launch a sql over all started DB
     """
@@ -109,6 +109,71 @@ def executeBash(sName,bashFile):
         return False
     return True
 ##-----------------------
+def getMultiOraData(sName,bashFile,historyLimit):
+    """
+    exec a loop to launch a sql over all started DB
+    params: tmux session, file to execute, buffer size(lines)
+    """
+    try:
+        bashFilePtr = open(bashFile,'r')
+    except Exception as diag:
+        logging.error('executeBash',':',diag)
+        return False
+    tmuxClear(sName)
+    bashHeader="""
+ORAENV_ASK=NO
+for i in `ps -ef | grep smon_ | cut -f3 -d _ | grep -v ASM | grep -v ^$ | sort | xargs`
+do
+ORACLE_SID=${i}; export ORACLE_SID
+. oraenv
+echo \$ORACLE_SID
+"""
+    bashEnd="done"
+    os.system('tmux send-key -t ' + sName + ' \''  + bashHeader + '\' Enter')
+    for line in bashFilePtr.read().splitlines():
+        os.system('tmux send-key -t ' + sName + ' "'  + line + '" Enter')
+    os.system('tmux send-key -t ' + sName + ' \''  + bashEnd + '\' Enter')
+    # No error checking
+    outPut = os.popen('tmux capture-pane -pS -100000 -t ' + sName + '> ' + sName)
+    return True
+##-----------------------
+def test(sName,bashFile):
+    """
+    exec a loop to launch a sql over all started DB
+    params: tmux session, file to execute, buffer size(lines)
+    """
+    try:
+        bashFilePtr = open(bashFile,'r')
+    except Exception as diag:
+        logging.error('executeBash',':',diag)
+        return False
+    # prepare sql script
+    tmuxClear(sName)
+    print('tmux send-key -t ' + sName + ' "cat /dev/null > /tmp/script.sql" Enter')
+    for line in bashFilePtr.read().splitlines():
+        if line.find("'") > -1:
+            print('tmux send-key -t ' + sName + ' " echo \" ' + line + '\" >> /tmp/script.sql" Enter')
+            os.system('tmux send-key -t ' + sName + ' " echo \\" ' + line + '\\" >> /tmp/script.sql" Enter')
+        else:
+            print('tmux send-key -t ' + sName + ' " echo \''  + line + '\' >> /tmp/script.sql" Enter')
+            os.system('tmux send-key -t ' + sName + ' " echo \''  + line + '\' >> /tmp/script.sql" Enter')
+    bashFilePtr.close()
+    bashHeader="""
+ORAENV_ASK=NO
+for i in `ps -ef | grep smon_ | cut -f3 -d _ | grep -v ASM | grep -v ^$ | sort | xargs`
+do
+ORACLE_SID=${i}; export ORACLE_SID
+. oraenv
+echo \$ORACLE_SID
+sqlplus "/ as sysdba" @/tmp/script.sql
+done
+#rm /tmp/script.sql
+"""
+    os.system('tmux send-key -t ' + sName + ' \''  + bashHeader + '\' Enter')
+    # sleep to wait the end of the remote execute
+    time.sleep(20)
+    os.system('tmux capture-pane -pS -100000 -t ' + sName + '> ' + sName)
+    return True
 """
   MAIN
   V0 : monosession
@@ -122,8 +187,11 @@ serverName = wallixKAz
 oracleServer = 'vml0dtbora000'
 customer = 'korian'
 sudoUser = 'oracle'
+
+scriptCpu='oraAwrCpuStatsAllDb.bash'
+scriptChgAwr='oraChgAwrParamAllDb.bash'
 BashScriptPath='/mnt/c/oracle/OracleCode/python/autoBash/Scripts/' # \\ so \ is not seen as special
-scriptName='oraChgAwrParamAllDb.bash'
+scriptName=scriptCpu
 
 # Other variables
 sessionBName = customer + '_ssh'
@@ -163,4 +231,6 @@ if not wallixSelection(sessionName,oracleServer,wUserPass[0],wUserPass[1]):
 if sudo(sessionName,sudoUser) != True :
     logging.error('sudo : Unable to sudo as ' + sudoUser)
 
-executeBash(sessionName,BashScriptPath + scriptName)
+os.system('tmux set-option history-limit 500000')
+#getMultiOraData(sessionName,BashScriptPath + scriptName)
+test(sessionName,BashScriptPath + scriptName)
