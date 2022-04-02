@@ -31,10 +31,38 @@ def readPwd(customer,domain,srvName):
             return (line.split('\n')[0].split(entry)[1].split(':'))
     return True
 ## ------------------------
+
 def dateTime():
     now = datetime.now()
     return now.strftime("%m%d%H%M%S")
 ## -----------------------
+
+def getTmuxSession(baseName = ''):
+    """
+    get a Tmux session Name. check if a session can be reused
+    take a base for the session name
+    """
+    for line in os.popen('tmux ls','r').readlines():
+        if line.find(baseName) != -1:
+            print('Do you want to reuse session: ' + line.split(':')[0] + '? [y/n] ', end="")
+            if input() == 'y':
+                sessionName = line.split(':')[0]
+                return sessionName
+# if no session has been found request creation of a new one
+    sessionName = baseName + 'S' + '_' + dateTime()
+    windowsName = baseName + 'W' + '_' + dateTime()
+    print ('please open a terminal window and launch "' + 'tmux new -s ' + sessionName + ' -n ' + windowsName + '"')
+    print ('press y then return when you are ready: ', end="" )
+    reply = input()
+    if reply != 'y':
+        logging.info('exiting, have a nice day')
+    logging.info('checking if tmux session exists ...')
+    if os.popen('tmux ls','r').read().find(sessionName) == -1:
+        logging.error('main: tmux session not found')
+        exit(-1)
+    return sessionName
+## -----------------------
+
 def connectSsh (sName,srvName,userName,password,socksServer = '',socksSrvPort = '1080'):
     """
     create an ssh session throught the windows pane provided
@@ -49,17 +77,15 @@ def connectSsh (sName,srvName,userName,password,socksServer = '',socksSrvPort = 
     time.sleep(5)
     return True
 ##-------------------------
+
 def wallixSelection(sName,srvName,userName,password):
     """
     select server in wallix menu
     """
     lines = os.popen('tmux capture-pane -pS -100 -t ' + sName ).readlines()
-    print(srvName + " " + userName + " " + password)
     for line in lines:
-        print(line)
         if line.find(srvName) !=-1 :
-            srvNum=line.split(" | ")[0].lstrip("| ")
-            print('"'+srvNum+'"')
+            srvNum=line.split(" | ")[0].lstrip("|").lstrip(" ")
             os.system('tmux send-key -t ' + sName + ' ' + srvNum + ' Enter')
             time.sleep(5)
             os.system('tmux send-key -t ' + sName + ' \'' + userName + '\' Enter')
@@ -68,6 +94,7 @@ def wallixSelection(sName,srvName,userName,password):
             return True
     return False
 ##------------------------
+
 def tmuxClear(sName):
     """
     clear terminal history
@@ -77,6 +104,7 @@ def tmuxClear(sName):
         os.system('tmux clear-history')
     return True
 ##-----------------------
+
 def sudo(sName,userName):
     if userName != '':
         os.system('tmux send-key -t ' + sName + ' \'sudo su - ' + userName + '\' Enter')
@@ -84,11 +112,12 @@ def sudo(sName,userName):
     else:
         return False
     os.system('tmux send-key -t ' + sName + ' whoami Enter')
-    print(os.popen('tmux capture-pane -pS -3 -t ' + sName ).read())
-    if os.popen('tmux capture-pane -pS -3 -t ' + sName ).read().find('\n' + userName) >= 0:
+    time.sleep(2)
+    if os.popen('tmux capture-pane -pS -5 -t ' + sName ).read().find('\n' + userName) >= 0:
         return True
     return False
 ##-----------------------
+
 def executeBashNoData(sName,bashFile):
     """
     exec a loop to launch a sql over all started DB
@@ -109,39 +138,14 @@ def executeBashNoData(sName,bashFile):
         return False
     return True
 ##-----------------------
-def getMultiOraData(sName,bashFile,historyLimit):
+
+def getMultiOraData(sName,bashFile,outFileName = ''):
     """
     exec a loop to launch a sql over all started DB
-    params: tmux session, file to execute, buffer size(lines)
+    params: tmux session, file to execute, filename for the data ouput
     """
-    try:
-        bashFilePtr = open(bashFile,'r')
-    except Exception as diag:
-        logging.error('executeBash',':',diag)
-        return False
-    tmuxClear(sName)
-    bashHeader="""
-ORAENV_ASK=NO
-for i in `ps -ef | grep smon_ | cut -f3 -d _ | grep -v ASM | grep -v ^$ | sort | xargs`
-do
-ORACLE_SID=${i}; export ORACLE_SID
-. oraenv
-echo \$ORACLE_SID
-"""
-    bashEnd="done"
-    os.system('tmux send-key -t ' + sName + ' \''  + bashHeader + '\' Enter')
-    for line in bashFilePtr.read().splitlines():
-        os.system('tmux send-key -t ' + sName + ' "'  + line + '" Enter')
-    os.system('tmux send-key -t ' + sName + ' \''  + bashEnd + '\' Enter')
-    # No error checking
-    outPut = os.popen('tmux capture-pane -pS -100000 -t ' + sName + '> ' + sName)
-    return True
-##-----------------------
-def test(sName,bashFile):
-    """
-    exec a loop to launch a sql over all started DB
-    params: tmux session, file to execute, buffer size(lines)
-    """
+    if outFileName == '':
+        outFileName = sName
     try:
         bashFilePtr = open(bashFile,'r')
     except Exception as diag:
@@ -172,65 +176,17 @@ done
     os.system('tmux send-key -t ' + sName + ' \''  + bashHeader + '\' Enter')
     # sleep to wait the end of the remote execute
     time.sleep(20)
-    os.system('tmux capture-pane -pS -100000 -t ' + sName + '> ' + sName)
+    os.system('tmux capture-pane -pS -100000 -t ' + sName + '> ' + outFileName)
     return True
-"""
-  MAIN
-  V0 : monosession
-"""
+## ----------------------
 
-# Parameters
-socks5 = '129.39.133.102'
-wallixKOP = '15.1.92.188'
-wallixKAz = '15.1.92.247'
-serverName = wallixKAz
-oracleServer = 'vml0dtbora000'
-customer = 'korian'
-sudoUser = 'oracle'
-
-scriptCpu='oraAwrCpuStatsAllDb.bash'
-scriptChgAwr='oraChgAwrParamAllDb.bash'
-BashScriptPath='/mnt/c/oracle/OracleCode/python/autoBash/Scripts/' # \\ so \ is not seen as special
-scriptName=scriptCpu
-
-# Other variables
-sessionBName = customer + '_ssh'
-sessionName = ''
-
-# search for an existing
-for line in os.popen('tmux ls','r').readlines():
-    if line.find(sessionBName) != -1:
-        print('Do you want to reuse session: ' + line.split(':')[0] + '? [y/n] ', end="")
-        if input() == 'y':
-            sessionName = line.split(':')[0]
-            break
-
-# if no session has been found request creation of a new one
-if sessionName == '':
-    sessionName = sessionBName + 'S' + '_' + dateTime()
-    windowsName = sessionBName + 'W' + '_' + dateTime()
-    print ('please open a terminal window and launch "' + 'tmux new -s ' + sessionName + ' -n ' + windowsName + '"')
-    print ('press y then return when you are ready: ', end="" )
-    reply = input()
-    if reply != 'y':
-        logging.info('exiting, have a nice day')
-
-logging.info('checking if tmux session exists ...')
-if os.popen('tmux ls','r').read().find(sessionName) == -1:
-    logging.error('main: tmux session not found')
-    exit(-1)
-
-tUserPass = readPwd(customer,'ssh',serverName)
-connectSsh(sessionName,serverName,tUserPass[0],tUserPass[1],socks5)
-tmuxClear(sessionName)
-
-wUserPass = readPwd(customer,'wallix',oracleServer)
-if not wallixSelection(sessionName,oracleServer,wUserPass[0],wUserPass[1]):
-    logging.error('wallixSelection: Unable to select a server')
-
-if sudo(sessionName,sudoUser) != True :
-    logging.error('sudo : Unable to sudo as ' + sudoUser)
-
-os.system('tmux set-option history-limit 500000')
-#getMultiOraData(sessionName,BashScriptPath + scriptName)
-test(sessionName,BashScriptPath + scriptName)
+def parseOutput(sourceFile,destFile = 'output.csv',lineFilter = ''):
+    """
+    read de file create a new file with line containing the line filter, removing the line Filter in the process
+    """
+    try:
+        open(destFile,'w').writelines(line.replace(lineFilter,'') for line in open(sourceFile,'r') if lineFilter in line)
+    except Exception as diag:
+        logging.error('tmux4sql.parseOutput',':',diag)
+        return False
+    return True
