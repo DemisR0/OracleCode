@@ -1,5 +1,5 @@
 alter session set nls_date_format = 'YYYY-MM-DD HH24:MI' ;
-set colsep '|'
+set colsep ','
 set head off
 set linesize 200
 col instance_name for a20
@@ -31,7 +31,7 @@ fgbgcpu AS(
 SELECT snap_id,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
 FROM cpu
 )
-SELECT snap_id,instance_name,to_char(end_interval_time,'YYYY-MM-DD HH24:MI'),round((fgcpu+bgcpu)*1.1/(DELTA*1000000),2) Vcpu_mnh
+SELECT '|'||snap_id||','||instance_name||','||to_char(end_interval_time,'YYYY-MM-DD HH24:MI')||','||round((fgcpu+bgcpu)*1.1/(DELTA*1000000),2)
 FROM fgbgcpu
 WHERE bgcpu IS NOT NULL;
 exit;
