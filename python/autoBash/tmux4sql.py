@@ -171,7 +171,7 @@ ORACLE_SID=${i}; export ORACLE_SID
 echo \$ORACLE_SID
 sqlplus "/ as sysdba" @/tmp/script.sql
 done
-#rm /tmp/script.sql
+    rm /tmp/script.sql
 """
     os.system('tmux send-key -t ' + sName + ' \''  + bashHeader + '\' Enter')
     # sleep to wait the end of the remote execute
@@ -185,8 +185,26 @@ def parseOutput(sourceFile,destFile = 'output.csv',lineFilter = ''):
     read de file create a new file with line containing the line filter, removing the line Filter in the process
     """
     try:
-        open(destFile,'w').writelines(line.replace(lineFilter,'') for line in open(sourceFile,'r') if lineFilter in line)
+        # remember no leading for oracle numbers
+        open(destFile,'w').writelines(line.replace(lineFilter,'').replace(',.',',0.') for line in open(sourceFile,'r') if lineFilter in line)
     except Exception as diag:
         logging.error('tmux4sql.parseOutput',':',diag)
         return False
     return True
+
+## --------------------------
+def exitSsh(sName,wallix = False,sudo = False):
+    if sudo:
+        # suppose only one sudo
+        os.system('tmux send-key -t ' + sName + ' \'exit\' Enter')
+    os.system('tmux send-key -t ' + sName + ' \'exit\' Enter')
+    if wallix:
+        time.sleep(5)
+        os.system('tmux send-key -t ' + sName + ' \'N\' Enter')
+    return True
+## --------------------------
+def getXterm(sName,display = ':1'):
+    if os.system('export DISPLAY=' + display + '; nohup xterm -fg white -bg black -title ' + sName + ' -geometry 150x30+100+100 -fa lucidasans-10 -sl 500000 -e /bin/bash -c "tmux new -s ' + sName + ' -n ' + sName + '" &') == 0:
+        return True
+    else:
+        return False
