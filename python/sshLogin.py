@@ -27,13 +27,11 @@ destServer=''
 
 try:
   opts, args = getopt.getopt(sys.argv[1:],"c:s:k:d:",["customer=","sshServer=","socks5=","destServer="])
-  print (sys.argv[1:])
 except getopt.GetoptError:
  print ('sshLogin.py -c <customer> -s <ssh servername> -k <socksServer> [-d <destination>]')
  sys.exit(2)
 
 for opt, arg in opts:
-    print(opt)
     if opt == '-h':
         print ('sshLogin.py -c <customer> -s <ssh servername> -k <sockServer> [-d <destination>]')
         sys.exit(2)
