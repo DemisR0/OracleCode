@@ -17,9 +17,6 @@ Sys.setenv(JAVA_HOME='C:/app/oracle/Client21c/jdk')
 
 # Constantes
 dbid = 783443023    # FAC=783443023  DWH=2282045280
-Instbm1 = 'DWH1'
-Instbm2 = 'DWH2'
-Instam = 'DWH'
 
 # functions
 
@@ -47,7 +44,7 @@ INNER JOIN SYS.WRM$_DATABASE_INSTANCE di
 ON di.dbid=snaps.dbid
 AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
-AND begin_interval_time > sysdate-20
+AND begin_interval_time > sysdate-90
 ),
 fgbgcpu AS(
 SELECT snap_id,dbid,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
@@ -57,7 +54,13 @@ SELECT snap_id,dbid,instance_name,end_interval_time,round((fgcpu+bgcpu)/(DELTA*1
 FROM fgbgcpu
 WHERE bgcpu IS NOT NULL")
 
+
 awrSysTimeModelCpuNonaDf <- na.omit(awrSysTimeModelCpu)
+head(awrSysTimeModelCpu)
+
+Instbm1 = 'FAC1'
+Instbm2 = 'FAC2'
+Instam = 'FAC'
 
 inst1BmDf <- awrSysTimeModelCpuNonaDf [awrSysTimeModelCpuNonaDf$INSTANCE_NAME == Instbm1,]
 head(inst1BmDf)
@@ -72,7 +75,7 @@ head(instAmDf)
 instAllBmDf <- inner_join(inst1BmDf,inst2BmDf,by = c('SNAP_ID', 'DBID')) %>% 
   select(SNAP_ID,DBID,END_INTERVAL_TIME.x,VCPU.x,VCPU.y) 
 
-head(instBmDf)
+head(instAllBmDf)
 
 instBmDf <- instAllBmDf %>%  mutate(VCPU = VCPU.x + VCPU.y) %>%
   select (END_INTERVAL_TIME.x,VCPU) %>%  
@@ -82,9 +85,11 @@ instBmDf <- instAllBmDf %>%  mutate(VCPU = VCPU.x + VCPU.y) %>%
 head(instBmDf,20)
 instAllDf <- union(instBmDf,instAmDf)
 
-ggplot(data=instAllDf)	+ geom_line(aes(x=END_INTERVAL_TIME,	y=VCPU, color = "darkgreen"))
-
-
+ggplot(data=instAllDf,aes(x=END_INTERVAL_TIME, y=VCPU))	+ 
+  geom_line(colour = "blue") +
+  scale_x_datetime(date_breaks = "1 week") +
+  geom_smooth(se = FALSE) +
+  labs(x = "Date", y = "nb Vcpu", colour = "Colour\nlegend")
 odbcClose(dbconn)
 
 
