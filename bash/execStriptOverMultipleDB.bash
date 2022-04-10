@@ -1,13 +1,16 @@
 # Execute an sql Script over multiple DBs
-ps -ef | grep smon_ | cut -f3 -d _ | grep -v ASM | grep -v ^$ | sort | xargs
-SCRIPT=script.sql
-rm stats
+export $instances=`ps -ef | grep smon_ | cut -f3 -d _ | grep -v ASM | grep -v ^$ | sort | xargs`
+export SCRIPT=script.sql
+rm stats.tmp
 ORAENV_ASK=NO
-for i in HOP00P HOP2 HOPL ORCL2 SAG00P SAG2
+for i in `ps -ef | grep smon_ | cut -f3 -d _ | grep -v ASM | grep -v ^$ | sort | xargs`
 do
 ORACLE_SID=${i}; export ORACLE_SID
 . oraenv
-sqlplus '/ as sysdba' @$SCRIPT ${i} | grep ${i} >> stats.tmp
+echo "------ $i ------" >> stats.tmp
+echo "----------------" >> stats.tmp
+sqlplus '/ as sysdba' @$SCRIPT >> stats.tmp
+echo "----------------" >> stats.tmp
 done
 grep -v \' stats.tmp
 rm script.sql
@@ -20,4 +23,10 @@ rm script.sql
 # ODA-CLY-N02: COD2 DRI2 DSN2 HR92
 # OD8-CLY-N01: HOP1 ORCL1 SAG1
 # OD8-CLY-N02: HOP00P HOP2 HOPL ORCL2 SAG00P SAG2
-
+-- ex memory
+set head off
+set pagesize 200
+set linesize 500
+show parameter sga_m
+show show parameter pga_
+exit;
