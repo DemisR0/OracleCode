@@ -26,7 +26,7 @@ WHERE (sysst.dbid, sysst.stat_id) IN ( SELECT dbid, stat_id FROM sys.wrh$_stat_n
 AND snaps.snap_id = sysst.snap_id
 AND snaps.dbid =sysst.dbid
 AND sysst.instance_number=snaps.instance_number
-and begin_interval_time > sysdate-7 -- Nb of days
+and begin_interval_time > sysdate-30 -- Nb of days
 ),
 phy_write_bytes as (
 SELECT  sysst.snap_id, sysst.instance_number, begin_interval_time ,end_interval_time ,  startup_time,
@@ -37,7 +37,7 @@ WHERE (sysst.dbid, sysst.stat_id) IN ( SELECT dbid, stat_id FROM sys.wrh$_stat_n
 AND snaps.snap_id = sysst.snap_id
 AND snaps.dbid =sysst.dbid
 AND sysst.instance_number=snaps.instance_number
-and begin_interval_time > sysdate-7 -- Nb of days
+and begin_interval_time > sysdate-30 -- Nb of days
 )
 SELECT '|'||di.instance_name, di.host_name, to_char(rb.end_interval_time,'YYYYMMDD HH24:MI'),round(readb_value/DELTA,0) readbytes_sec,round(writeb_value/DELTA,0) writebytes_sec, round((readb_value+writeb_value)/DELTA,2) io_bytes_sec
 FROM phy_read_bytes rb
