@@ -35,6 +35,7 @@ ON di.dbid=snaps.dbid
 AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
 AND begin_interval_time > sysdate-90
+AND ERROR_COUNT<1
 ),
 fgbgcpu AS(
 SELECT snap_id,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
@@ -67,6 +68,7 @@ ON di.dbid=snaps.dbid
 AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
 AND begin_interval_time > sysdate-90
+AND ERROR_COUNT<1
 ),
 fgbgcpu AS(
 SELECT snap_id,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
