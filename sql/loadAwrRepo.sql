@@ -7,12 +7,12 @@ default tablespace AWR
 temporary tablespace TEMP;
 grant create session to AWR_TRN;
 grant unlimited tablespace to AWR_TRN;
-grant read, write on directory DATA_PUMP_DIR to AWR_TRN;
+grant read, write on directory TEMP to AWR_TRN;
 
 variable schname varchar2(128);
 exec :schname := 'AWR_TRN';
 variable dmpfile varchar2(128);
-exec :dmpfile := 'expdp_AWRsnaps_&1';
+exec :dmpfile := '&1';
 variable dmpdir varchar2(128);
 exec :dmpdir := 'DATA_PUMP_DIR';
 
