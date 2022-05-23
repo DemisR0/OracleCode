@@ -9,7 +9,9 @@ col begin_interval_time for a25
 col end_interval_time for a25
 col startup_time for a25
 col instance_number for 99
-set colsep '|'
+set colsep ','
+alter session set NLS_NUMERIC_CHARACTERS = ". ";
+alter session set ALTER SESSION SET NLS_LANGUAGE= 'AMERICAN' NLS_TERRITORY= 'AMERICA';
 alter session set nls_date_format='DD-MON-YYYY';
 
 -- retour en CPU/sec
@@ -34,14 +36,14 @@ INNER JOIN SYS.WRM$_DATABASE_INSTANCE di
 ON di.dbid=snaps.dbid
 AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
-AND begin_interval_time > sysdate-90
+AND begin_interval_time > sysdate-300
 AND ERROR_COUNT<1
 ),
 fgbgcpu AS(
 SELECT snap_id,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
 FROM cpu
 )
-SELECT snap_id,instance_name,end_interval_time,round((fgcpu+bgcpu)*1.1/(DELTA*1000000),2) Vcpu_mnh
+SELECT snap_id,instance_name,to_char(end_interval_time,'YYYY-MM-DD HH24:MI'),round((fgcpu+bgcpu)*1.1/(DELTA*1000000),2) Vcpu_mnh
 FROM fgbgcpu
 WHERE bgcpu IS NOT NULL;
 
@@ -67,7 +69,7 @@ INNER JOIN SYS.WRM$_DATABASE_INSTANCE di
 ON di.dbid=snaps.dbid
 AND di.instance_number=snaps.instance_number
 AND di.startup_time=snaps.startup_time
-AND begin_interval_time > sysdate-90
+AND begin_interval_time > sysdate-7
 AND ERROR_COUNT<1
 ),
 fgbgcpu AS(
