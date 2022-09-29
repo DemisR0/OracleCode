@@ -3,22 +3,23 @@
 -- Uniquement avec dbid instance_name startup_time pour eviter tout melange au niveau des instances qui partageraient le meme dbid et instance_name
 -- retour en CPU/sec
 col begin_interval_time format a30
-set lines 160 pages 1000
+set lines 160 pages 50000
 col end_interval_time format a30
 col begin_interval_time for a25
 col end_interval_time for a25
 col startup_time for a25
 col instance_number for 99
 set colsep ','
+col host_name for a14
 alter session set NLS_NUMERIC_CHARACTERS = ". ";
 alter session set ALTER SESSION SET NLS_LANGUAGE= 'AMERICAN' NLS_TERRITORY= 'AMERICA';
 alter session set nls_date_format='DD-MON-YYYY';
 
--- retour en CPU/sec
+-- retour en CPU/sec -- séparaé par instance
 
 WITH cpu AS (
-SELECT  sysst.snap_id,sysst.stat_id, sysst.dbid,snaps.startup_time,sysst.instance_number,di.instance_name, begin_interval_time ,end_interval_time,
-VALUE - lag (VALUE) OVER ( PARTITION BY  sysst.dbid, sysst.instance_number,snaps.startup_time,sysst.stat_id ORDER BY sysst.snap_id) stat_value,
+SELECT  sysst.snap_id,sysst.stat_id, di.host_name, sysst.dbid,snaps.startup_time,sysst.instance_number,di.instance_name, begin_interval_time ,end_interval_time,
+VALUE - lag (VALUE) OVER ( PARTITION BY  sysst.dbid,di.host_name, sysst.instance_number,snaps.startup_time,sysst.stat_id ORDER BY sysst.snap_id) stat_value,
 EXTRACT (DAY    FROM (end_interval_time-begin_interval_time))*24*60*60+
             EXTRACT (HOUR   FROM (end_interval_time-begin_interval_time))*60*60+
             EXTRACT (MINUTE FROM (end_interval_time-begin_interval_time))*60+
@@ -40,12 +41,13 @@ AND begin_interval_time > sysdate-300
 AND ERROR_COUNT<1
 ),
 fgbgcpu AS(
-SELECT snap_id,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
+SELECT snap_id,instance_name,cpu.instance_number,host_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
 FROM cpu
 )
-SELECT snap_id,instance_name,to_char(end_interval_time,'YYYY-MM-DD HH24:MI'),round((fgcpu+bgcpu)*1.1/(DELTA*1000000),2) Vcpu_mnh
-FROM fgbgcpu
-WHERE bgcpu IS NOT NULL;
+SELECT 'krn',fgbgcpu.host_name,fgbgcpu.instance_number,snap_id,i.instance_name,to_char(end_interval_time,'YYYY-MM-DD HH24:MI'),round((fgcpu+bgcpu)*1.1/(DELTA*1000000),2) Vcpu_mnh
+FROM fgbgcpu,v$instance i
+WHERE bgcpu IS NOT NULL
+ORDER BY snap_id ASC;
 
 -- retour en min CPU pour X mn durée du report ajout background cpu pour se rapprocher des stats awr
 
@@ -76,6 +78,6 @@ fgbgcpu AS(
 SELECT snap_id,instance_name,end_interval_time,stat_value fgcpu , lag (stat_value) over ( partition by dbid,instance_number,startup_time,snap_id order by stat_id) bgcpu, DELTA -- /round(DELTA*1000000/60,0),2) VCpuUsed
 FROM cpu
 )
-SELECT snap_id,instance_name,end_interval_time,round((fgcpu+bgcpu)/(DELTA*1000000/60),2) Vcpu_mnh
-FROM fgbgcpu
+SELECT 'krn',host_name,snap_id,instance_name,end_interval_time,round((fgcpu+bgcpu)/(DELTA*1000000/60),2) Vcpu_mnh
+FROM fgbgcpu,v$instance
 WHERE bgcpu IS NOT NULL;
