@@ -6,9 +6,10 @@ ORAENV_ASK=NO
 rm stats
 for i in `ps -ef | grep smon_ | cut -f3 -d _ | grep -v ASM | grep -v ^$ | sort | xargs`
 do
+  ORAENV_ASK=NO
   export ORACLE_SID=$i
   . oraenv
-  sqlplus '/ as sysdba' @script.sql | grep '\.' >> stats
+  sqlplus -s '/ as sysdba' @script.sql   | grep '^|' >> stats
 done
 rm script.sql
 
