@@ -9,11 +9,22 @@
         col begin_interval_time format a30
         set lines 300 pages 50000
         col end_interval_time format a30
-        col stat_value format 9999999999999999
-        col host_name format a15
-        col instance_name format a8
-        col function_name format a20
+        col stat_value format 9999999
+        col host_name format a10
+        col instance format a8
+        col func format a20
+        col small_reads_mb  format 99999
+        col small_writes_mb format 99999
+        col large_read_mb  format 99999
+        col large_write_mb format 99999
+        col small_read_reqs format 99999
+        col small_write_reqs format 99999
+        col large_read_reqs format 99999
+        col large_write_reqs format 99999
+        col delta format 999999
         set colsep ','
+        select '|db_name,instance,snap_id,hostname,date,io_func,small_reads_b,small_writes_b,large_read_b,large_write_b,small_read_reqs,small_write_reqs,large_read_reqs,large_write_reqs'
+        from dual;
         alter session set nls_date_format='DD-MON-YYYY';
         with io_by_func as (
         select  snaps.dbid,sysst.snap_id, sysst.instance_number, begin_interval_time ,end_interval_time ,  startup_time, function_name,
@@ -43,17 +54,17 @@
         and sysst.instance_number=snaps.instance_number
         and begin_interval_time > sysdate-30 -- Nb of days
         )
-        select '|'||di.instance_name, di.host_name, to_char(io.end_interval_time,'YYYYMMDD HH24:MI'),io.function_name,
-                round((small_reads_mb)/DELTA,0) small_reads_mb,
-                round((small_writes_mb)/DELTA,0) small_writes_mb,
-                round((large_read_mb)/DELTA,0) large_read_mb,
-                round((large_write_mb)/DELTA,0) large_write_mb,
-                round((small_read_reqs)/DELTA,0) small_read_reqs,
-                round((small_write_reqs)/DELTA,0) small_write_reqs,
-                round((large_read_reqs)/DELTA,0) large_read_reqs,
-                round((large_write_reqs)/DELTA,0) large_write_reqs
+        select '|'||di.db_name||','||di.instance_name||','||snap_id||','||di.host_name||','||to_char(io.end_interval_time,'YYYYMMDD HH24:MI')||','||io.function_name||','||
+                round((small_reads_mb)*1024*1024/DELTA,0)||','||
+                round((small_writes_mb)*1024*1024/DELTA,0)||','||   
+                round((large_read_mb)*1024*1024/DELTA,0)||','||
+                round((large_write_mb)*1024*1024/DELTA,0)||','||
+                round((small_read_reqs)*1024*1024/DELTA,0)||','||
+                round((small_write_reqs)*1024*1024/DELTA,0)||','||
+                round((large_read_reqs)*1024*1024/DELTA,0)||','||
+                round((large_write_reqs)*1024*1024/DELTA,0)
         from io_by_func io
-        inner join SYS.WRM$_DATABASE_INSTANCE di ON di.dbid=io.dbid
+        inner join DBA_HIST_DATABASE_INSTANCE di ON di.dbid=io.dbid
         AND di.instance_number=io.instance_number
         AND di.startup_time=io.startup_time
         where io.small_reads_mb is not NULL
@@ -63,5 +74,4 @@
         and io.small_read_reqs is not NULL
         and io.small_write_reqs is not NULL
         and io.large_read_reqs is not NULL
-        and io.large_write_reqs is not NULL
-        order by 3,4 asc;
+        and io.large_write_reqs is not NULL;
