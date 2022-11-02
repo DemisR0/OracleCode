@@ -23,7 +23,7 @@
         col large_write_reqs format 99999
         col delta format 999999
         set colsep ','
-        select '|db_name,instance,snap_id,hostname,date,io_func,small_reads_b,small_writes_b,large_read_b,large_write_b,small_read_reqs,small_write_reqs,large_read_reqs,large_write_reqs'
+        select '||host_name,instance_number,snap_id,instance_name,date,io_func,small_reads_b,small_writes_b,large_read_b,large_write_b,small_read_reqs,small_write_reqs,large_read_reqs,large_write_reqs'
         from dual;
         alter session set nls_date_format='DD-MON-YYYY';
         with io_by_func as (
@@ -54,7 +54,7 @@
         and sysst.instance_number=snaps.instance_number
         and begin_interval_time > sysdate-30 -- Nb of days
         )
-        select '|'||di.db_name||','||di.instance_name||','||snap_id||','||di.host_name||','||to_char(io.end_interval_time,'YYYYMMDD HH24:MI')||','||io.function_name||','||
+        select '|'||di.host_name||','||di.instance_number||','||io.snap_id||','||di.instance_name||','||to_char(io.end_interval_time,'YYYYMMDD HH24:MI')||','||io.function_name||','||
                 round((small_reads_mb)*1024*1024/DELTA,0)||','||
                 round((small_writes_mb)*1024*1024/DELTA,0)||','||   
                 round((large_read_mb)*1024*1024/DELTA,0)||','||
