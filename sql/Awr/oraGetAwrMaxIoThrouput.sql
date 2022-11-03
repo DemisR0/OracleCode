@@ -1,10 +1,7 @@
 -- oraGetAwrMaxIoReadsSnaps
 -- Target: get the snaps for which there have been the maximum number of logical reads
 -- Use AWR repo
-alter session set nls_date_format = 'YYYY-MM-DD HH24:MI' ;
 alter session  set NLS_NUMERIC_CHARACTERS= '. ';
-alter session set nls_lang='AMERICAN';
-alter session set NLS_TERRITORY='AMERICA';
 col begin_interval_time format a30
 set lines 160 pages 1000
 col end_interval_time format a30
@@ -39,7 +36,7 @@ AND snaps.dbid =sysst.dbid
 AND sysst.instance_number=snaps.instance_number
 and begin_interval_time > sysdate-30 -- Nb of days
 )
-SELECT '|'||di.instance_name, di.host_name, to_char(rb.end_interval_time,'YYYYMMDD HH24:MI'),round(readb_value/DELTA,0) readbytes_sec,round(writeb_value/DELTA,0) writebytes_sec, round((readb_value+writeb_value)/DELTA,2) io_bytes_sec
+SELECT '|'||di.instance_name, di.host_name, to_char(rb.end_interval_time,'YYYYMMDD HH24:MI') SNP_DATE,round(readb_value/DELTA,0) readbytes_sec,round(writeb_value/DELTA,0) writebytes_sec, round((readb_value+writeb_value)/DELTA,2) io_bytes_sec
 FROM phy_read_bytes rb
 INNER JOIN phy_write_bytes wb ON rb.snap_id=wb.snap_id
 AND rb.instance_number=wb.instance_number
